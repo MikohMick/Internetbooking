@@ -25,102 +25,95 @@ class ISB_Form_Handler {
         die();
     }
     
-    /**
-     * AJAX handler for form submission
-     */
-    public function ajax_submit_booking() {
-        // Debug logging - save this to a file we can check
-        error_log('======= BOOKING FORM SUBMISSION ========');
-        error_log('POST data: ' . print_r($_POST, true));
+/**
+ * AJAX handler for form submission
+ */
+public function ajax_submit_booking() {
+    // Debug logging
+    error_log('======= BOOKING FORM SUBMISSION ========');
+    error_log('POST data: ' . print_r($_POST, true));
+    
+    try {
+        // Capture the data
+        $booking_data = array(
+            'full_name' => isset($_POST['full_name']) ? sanitize_text_field($_POST['full_name']) : '',
+            'phone_number' => isset($_POST['phone_number']) ? sanitize_text_field($_POST['phone_number']) : '',
+            'email' => isset($_POST['email']) ? sanitize_email($_POST['email']) : '',
+            'kra_pin' => isset($_POST['kra_pin']) ? sanitize_text_field($_POST['kra_pin']) : '',
+            'estate' => isset($_POST['estate']) ? sanitize_text_field($_POST['estate']) : '',
+            'block_number' => isset($_POST['block_number']) ? sanitize_text_field($_POST['block_number']) : '',
+            'house_number' => isset($_POST['house_number']) ? sanitize_text_field($_POST['house_number']) : '',
+            'package' => isset($_POST['package']) ? sanitize_text_field($_POST['package']) : '',
+            'wifi_username' => isset($_POST['wifi_username']) ? sanitize_text_field($_POST['wifi_username']) : '',
+            'wifi_password' => isset($_POST['wifi_password']) ? sanitize_text_field($_POST['wifi_password']) : '',
+            'booking_date' => isset($_POST['booking_date']) ? sanitize_text_field($_POST['booking_date']) : '',
+            'booking_time' => isset($_POST['booking_time']) ? sanitize_text_field($_POST['booking_time']) : '',
+            'status' => 'confirmed'
+        );
         
-        // Don't check the nonce for now - just to see if we can get past this point
-        // We'll add proper security back once basic functionality works
+        error_log('Processed booking data: ' . print_r($booking_data, true));
         
-        // Process the submission with minimal validation
-        try {
-            // Just capture the data without extensive validation for testing
-            $booking_data = array(
-                'full_name' => isset($_POST['full_name']) ? sanitize_text_field($_POST['full_name']) : '',
-                'phone_number' => isset($_POST['phone_number']) ? sanitize_text_field($_POST['phone_number']) : '',
-                'email' => isset($_POST['email']) ? sanitize_email($_POST['email']) : '',
-                'kra_pin' => isset($_POST['kra_pin']) ? sanitize_text_field($_POST['kra_pin']) : '',
-                'estate' => isset($_POST['estate']) ? sanitize_text_field($_POST['estate']) : '',
-                'block_number' => isset($_POST['block_number']) ? sanitize_text_field($_POST['block_number']) : '',
-                'house_number' => isset($_POST['house_number']) ? sanitize_text_field($_POST['house_number']) : '',
-                'package' => isset($_POST['package']) ? sanitize_text_field($_POST['package']) : '',
-                'wifi_username' => isset($_POST['wifi_username']) ? sanitize_text_field($_POST['wifi_username']) : '',
-                'wifi_password' => isset($_POST['wifi_password']) ? sanitize_text_field($_POST['wifi_password']) : '',
-                'booking_date' => isset($_POST['booking_date']) ? sanitize_text_field($_POST['booking_date']) : '',
-                'booking_time' => isset($_POST['booking_time']) ? sanitize_text_field($_POST['booking_time']) : '',
-                'status' => 'confirmed' // Changed from 'pending' to 'confirmed'
-            );
-            
-            error_log('Processed booking data: ' . print_r($booking_data, true));
-            
-            // Validate package selection based on estate
-            if (!$this->validate_package_for_estate($booking_data['package'], $booking_data['estate'])) {
-                error_log('Invalid package for estate: ' . $booking_data['package'] . ' for ' . $booking_data['estate']);
-                wp_send_json_error(array('message' => 'Invalid package selection for the selected estate.'));
-                return;
-            }
-            
-            // Insert the booking directly
-            global $wpdb;
-            $table_name = $wpdb->prefix . 'isb_bookings';
-            
-            $wpdb->insert(
-                $table_name,
-                $booking_data,
-                array('%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s')
-            );
-            
-            $booking_id = $wpdb->insert_id;
-            error_log('Booking inserted with ID: ' . $booking_id);
-            
-            if ($booking_id) {
-                // Mark the time slot as booked
-                $slots_table = $wpdb->prefix . 'isb_time_slots';
-                $wpdb->update(
-                    $slots_table,
-                    array(
-                        'is_booked' => 1,
-                        'booking_id' => $booking_id
-                    ),
-                    array(
-                        'booking_date' => $booking_data['booking_date'],
-                        'time_slot' => $booking_data['booking_time'],
-                        'is_booked' => 0
-                    ),
-                    array('%d', '%d'),
-                    array('%s', '%s', '%d')
-                );
-                
-                error_log('Time slot marked as booked.');
-                
-                // Send data to webhook
-                $webhook_result = $this->send_to_webhook($booking_id, $booking_data);
-                error_log('Webhook result: ' . print_r($webhook_result, true));
-                
-                // Send success response
-                wp_send_json_success(array(
-                    'booking_id' => $booking_id,
-                    'message' => 'Booking successful!',
-                    'webhook_status' => $webhook_result['status'] ?? 'unknown'
-                ));
-            } else {
-                error_log('Failed to insert booking: ' . $wpdb->last_error);
-                wp_send_json_error(array('message' => 'Database error: ' . $wpdb->last_error));
-            }
-        } catch (Exception $e) {
-            error_log('Exception in booking process: ' . $e->getMessage());
-            wp_send_json_error(array('message' => 'Server error: ' . $e->getMessage()));
+        // Validate package selection based on estate
+        if (!$this->validate_package_for_estate($booking_data['package'], $booking_data['estate'])) {
+            error_log('Invalid package for estate: ' . $booking_data['package'] . ' for ' . $booking_data['estate']);
+            wp_send_json_error(array('message' => 'Invalid package selection for the selected estate.'));
+            return;
         }
         
-        // This should never be reached, but just in case
-        error_log('Reached end of ajax_submit_booking without sending a response');
-        wp_send_json_error(array('message' => 'Unknown error occurred.'));
-        die();
+        // Insert the booking
+        global $wpdb;
+        $table_name = $wpdb->prefix . 'isb_bookings';
+        
+        $wpdb->insert(
+            $table_name,
+            $booking_data,
+            array('%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s')
+        );
+        
+        $booking_id = $wpdb->insert_id;
+        error_log('Booking inserted with ID: ' . $booking_id);
+        
+        if ($booking_id) {
+            // Mark the time slot as booked
+            $availability = new ISB_Availability_Manager();
+            $slot_booked = $availability->book_time_slot(
+                $booking_data['booking_date'],
+                $booking_data['booking_time'],
+                $booking_data['estate'],
+                $booking_id
+            );
+            
+            if (!$slot_booked) {
+                error_log('Failed to book time slot for booking ID: ' . $booking_id);
+                // We still consider this a success since the booking was created
+            } else {
+                error_log('Time slot booked successfully for booking ID: ' . $booking_id);
+            }
+            
+            // Send data to webhook
+            $webhook_result = $this->send_to_webhook($booking_id, $booking_data);
+            error_log('Webhook result: ' . print_r($webhook_result, true));
+            
+            // Send success response
+            wp_send_json_success(array(
+                'booking_id' => $booking_id,
+                'message' => 'Booking successful!',
+                'webhook_status' => $webhook_result['status'] ?? 'unknown'
+            ));
+        } else {
+            error_log('Failed to insert booking: ' . $wpdb->last_error);
+            wp_send_json_error(array('message' => 'Database error: ' . $wpdb->last_error));
+        }
+    } catch (Exception $e) {
+        error_log('Exception in booking process: ' . $e->getMessage());
+        wp_send_json_error(array('message' => 'Server error: ' . $e->getMessage()));
     }
+    
+    // This should never be reached, but just in case
+    error_log('Reached end of ajax_submit_booking without sending a response');
+    wp_send_json_error(array('message' => 'Unknown error occurred.'));
+    die();
+}
     
 /**
  * Send booking data to webhook

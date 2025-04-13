@@ -169,11 +169,21 @@ class Internet_Service_Booking {
 /**
  * Register REST API endpoints
  */
+/**
+ * Register REST API endpoints
+ */
 public function register_rest_routes() {
-    // Register endpoint for checking time slot availability
-    register_rest_route('isb/v1', '/availability/(?P<date>\d{4}-\d{2}-\d{2})/(?P<estate>[a-zA-Z0-9\s%]+)', array(
+    // Register endpoint for checking time slot availability by date and estate
+    register_rest_route('isb/v1', '/availability/(?P<date>\d{4}-\d{2}-\d{2})/(?P<estate>[^/]+)', array(
         'methods' => 'GET',
         'callback' => array($this, 'get_available_time_slots'),
+        'permission_callback' => '__return_true',
+    ));
+    
+    // Register fallback endpoint for just date (for backward compatibility)
+    register_rest_route('isb/v1', '/availability/(?P<date>\d{4}-\d{2}-\d{2})', array(
+        'methods' => 'GET',
+        'callback' => array($this, 'get_available_time_slots_fallback'),
         'permission_callback' => '__return_true',
     ));
     
@@ -186,14 +196,35 @@ public function register_rest_routes() {
 }
 
 /**
- * REST API callback for getting available time slots
+ * REST API callback for getting available time slots with estate
  */
 public function get_available_time_slots($request) {
     $date = sanitize_text_field($request['date']);
     $estate = sanitize_text_field(urldecode($request['estate']));
     
+    // Log to help with debugging
+    error_log('Getting time slots for date: ' . $date . ' and estate: ' . $estate);
+    
     $availability = new ISB_Availability_Manager();
     $time_slots = $availability->get_available_slots($date, $estate);
+    
+    return rest_ensure_response($time_slots);
+}
+
+/**
+ * Fallback REST API callback for getting available time slots without estate
+ */
+public function get_available_time_slots_fallback($request) {
+    $date = sanitize_text_field($request['date']);
+    
+    // Log to help with debugging
+    error_log('Fallback: Getting time slots for date: ' . $date . ' without estate');
+    
+    // Use a default estate or handle the request differently
+    $availability = new ISB_Availability_Manager();
+    
+    // For backward compatibility, create a method that doesn't require estate parameter
+    $time_slots = [];
     
     return rest_ensure_response($time_slots);
 }
@@ -226,7 +257,7 @@ public function process_booking_rest($request) {
         
         error_log('Processed booking data: ' . print_r($booking_data, true));
         
-        // Insert the booking directly
+        // Insert the booking
         global $wpdb;
         $table_name = $wpdb->prefix . 'isb_bookings';
         
@@ -240,26 +271,23 @@ public function process_booking_rest($request) {
         error_log('Booking inserted with ID: ' . $booking_id);
         
         if ($booking_id) {
-            // Mark the time slot as booked
-            $slots_table = $wpdb->prefix . 'isb_time_slots';
-            $wpdb->update(
-                $slots_table,
-                array(
-                    'is_booked' => 1,
-                    'booking_id' => $booking_id
-                ),
-                array(
-                    'booking_date' => $booking_data['booking_date'],
-                    'time_slot' => $booking_data['booking_time'],
-                    'is_booked' => 0
-                ),
-                array('%d', '%d'),
-                array('%s', '%s', '%d')
+            // Mark the time slot as booked - use the availability manager instead of direct SQL
+            $availability = new ISB_Availability_Manager();
+            $slot_booked = $availability->book_time_slot(
+                $booking_data['booking_date'],
+                $booking_data['booking_time'],
+                $booking_data['estate'],
+                $booking_id
             );
             
-            error_log('Time slot marked as booked.');
+            if (!$slot_booked) {
+                error_log('Failed to book time slot for booking ID: ' . $booking_id);
+                // Continue anyway as the booking was created
+            } else {
+                error_log('Time slot marked as booked.');
+            }
             
-            // ADDED: Send data to webhook
+            // Send data to webhook
             $webhook_url = 'https://turbonetsolutions.co.ke/webhook.php';
             error_log('Sending data to webhook: ' . $webhook_url);
             
