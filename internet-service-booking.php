@@ -167,8 +167,6 @@ class Internet_Service_Booking {
     }
 
 /**
- * Register REST API endpoints
- */
 /**
  * Register REST API endpoints
  */
@@ -180,33 +178,47 @@ public function register_rest_routes() {
         'permission_callback' => '__return_true',
     ));
     
-    // Register fallback endpoint for just date (for backward compatibility)
-    register_rest_route('isb/v1', '/availability/(?P<date>\d{4}-\d{2}-\d{2})', array(
-        'methods' => 'GET',
-        'callback' => array($this, 'get_available_time_slots_fallback'),
-        'permission_callback' => '__return_true',
-    ));
-    
     // Register endpoint for form submission
     register_rest_route('isb/v1', '/booking', array(
         'methods' => 'POST',
         'callback' => array($this, 'process_booking_rest'),
         'permission_callback' => '__return_true',
     ));
+	// Add this to your register_rest_routes() method in internet-service-booking.php
+register_rest_route('isb/v1', '/debug/slots', array(
+    'methods' => 'GET',
+    'callback' => function() {
+        global $wpdb;
+        $table_name = $wpdb->prefix . 'isb_time_slots';
+        
+        $results = $wpdb->get_results("
+            SELECT booking_date, time_slot, estate, is_booked 
+            FROM $table_name 
+            ORDER BY booking_date DESC, estate, time_slot
+            LIMIT 100
+        ", ARRAY_A);
+        
+        return rest_ensure_response($results);
+    },
+    'permission_callback' => '__return_true',
+));
 }
 
 /**
- * REST API callback for getting available time slots with estate
+ * REST API callback for getting available time slots
  */
 public function get_available_time_slots($request) {
     $date = sanitize_text_field($request['date']);
     $estate = sanitize_text_field(urldecode($request['estate']));
     
-    // Log to help with debugging
-    error_log('Getting time slots for date: ' . $date . ' and estate: ' . $estate);
+    // Log for debugging
+    error_log("API Request - Date: $date, Estate: $estate");
     
     $availability = new ISB_Availability_Manager();
     $time_slots = $availability->get_available_slots($date, $estate);
+    
+    // Log result count
+    error_log("Found " . count($time_slots) . " available slots");
     
     return rest_ensure_response($time_slots);
 }
@@ -315,6 +327,8 @@ public function process_booking_rest($request) {
         return new WP_Error('server_error', 'Server error: ' . $e->getMessage(), array('status' => 500));
     }
 }
+	
+	
     
     /**
      * REST API callback for processing bookings (original version)
@@ -341,6 +355,7 @@ public function process_booking_rest($request) {
         ));
     }
 }
+
 
 // Initialize the plugin
 function isb_init() {

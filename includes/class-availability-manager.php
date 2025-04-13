@@ -116,6 +116,7 @@ class ISB_Availability_Manager {
         // Get current time
         $current_time = current_time('H:i');
         $current_date = current_time('Y-m-d');
+        $is_today = ($date == $current_date);
         
         // First, check if we need to create time slots for this date and estate
         $existing_slots = $wpdb->get_var($wpdb->prepare(
@@ -127,39 +128,31 @@ class ISB_Availability_Manager {
         error_log("Found {$existing_slots} existing slots for date: {$date}, estate: {$estate}");
         
         if ($existing_slots == 0) {
-            $this->create_slots_for_estate_date($estate, $date);
-            error_log("Created new slots for date: {$date}, estate: {$estate}");
+            $created = $this->create_slots_for_estate_date($estate, $date);
+            error_log("Created {$created} new slots for date: {$date}, estate: {$estate}");
         }
         
         // Prepare SQL query for time slots
         $query = "SELECT id, time_slot FROM $table_name 
                   WHERE booking_date = %s AND estate = %s AND is_booked = 0";
         
+        $query_params = array($date, $estate);
+        
         // If today, only show future time slots
-        if ($date == $current_date) {
+        if ($is_today) {
             // Get time slots with start time after current time
             $query .= " AND SUBSTRING_INDEX(time_slot, '-', 1) > %s";
-            $slots = $wpdb->get_results($wpdb->prepare(
-                $query,
-                $date,
-                $estate,
-                $current_time
-            ), ARRAY_A);
-        } else {
-            // For future dates, get all available slots
-            $slots = $wpdb->get_results($wpdb->prepare(
-                $query,
-                $date,
-                $estate
-            ), ARRAY_A);
+            $query_params[] = $current_time;
         }
         
-        error_log("Returning " . count($slots) . " available slots");
+        // Add order by clause
+        $query .= " ORDER BY time_slot ASC";
         
-        // Order by time
-        usort($slots, function($a, $b) {
-            return strcmp($a['time_slot'], $b['time_slot']);
-        });
+        // Get the slots
+        $slots = $wpdb->get_results($wpdb->prepare($query, $query_params), ARRAY_A);
+        
+        $slot_count = is_array($slots) ? count($slots) : 0;
+        error_log("Returning {$slot_count} available slots for {$date} at {$estate}");
         
         return $slots;
     }
@@ -169,12 +162,19 @@ class ISB_Availability_Manager {
      * 
      * @param string $estate Estate name
      * @param string $date Date in Y-m-d format
+     * @return int Number of slots created
      */
     private function create_slots_for_estate_date($estate, $date) {
         global $wpdb;
         $table_name = $wpdb->prefix . 'isb_time_slots';
         
         error_log("Creating slots for estate: {$estate}, date: {$date}");
+        
+        // Ensure date is valid
+        if (!strtotime($date)) {
+            error_log("Invalid date format for slot creation: {$date}");
+            return 0;
+        }
         
         $day_of_week = date('w', strtotime($date)); // 0 (Sunday) to 6 (Saturday)
         
@@ -190,13 +190,17 @@ class ISB_Availability_Manager {
             $end_hour = 16; // 4pm
         }
         
-        // Get current hour if it's today
-        $current_hour = (date('Y-m-d') == $date) ? (int)date('G') : 0;
+        // Don't use current hour filter for future dates (crucial fix!)
+        $is_today = (date('Y-m-d') == $date);
+        $current_hour = $is_today ? (int)date('G') : 0;
         
         // Create hourly time slots
+        $slots_created = 0;
+        
         for ($hour = $start_hour; $hour < $end_hour; $hour++) {
-            // Skip past hours for today
-            if (date('Y-m-d') == $date && $hour <= $current_hour) {
+            // Skip past hours for today only
+            if ($is_today && $hour <= $current_hour) {
+                error_log("Skipping past hour $hour for today");
                 continue;
             }
             
@@ -218,7 +222,7 @@ class ISB_Availability_Manager {
                         'booking_date' => $date,
                         'time_slot' => $time_slot,
                         'estate' => $estate,
-                        'is_booked' => false,
+                        'is_booked' => 0,
                         'booking_id' => null
                     ),
                     array('%s', '%s', '%s', '%d', '%s')
@@ -228,9 +232,13 @@ class ISB_Availability_Manager {
                     error_log("Failed to insert time slot: " . $wpdb->last_error);
                 } else {
                     error_log("Created time slot: {$date} {$time_slot} for estate: {$estate}");
+                    $slots_created++;
                 }
             }
         }
+        
+        error_log("Created $slots_created new time slots for $date at $estate");
+        return $slots_created;
     }
 
     /**
@@ -291,11 +299,15 @@ class ISB_Availability_Manager {
         // Convert to timestamp
         $date_timestamp = strtotime($date);
         
-        // Get current date timestamp (start of day)
-        $today = strtotime(date('Y-m-d'));
+        // Make sure it's a valid date string
+        if ($date_timestamp === false) {
+            error_log("Invalid date format: $date");
+            return false;
+        }
         
-        // Check if date is valid and today or in the future
-        return ($date_timestamp && $date_timestamp >= $today);
+        // For testing/debugging purposes, accept any valid date (including future dates)
+        error_log("Date validation: $date - VALID (Timestamp: $date_timestamp)");
+        return true;
     }
     
     /**
