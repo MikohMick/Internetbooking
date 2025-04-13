@@ -1,0 +1,507 @@
+/**
+ * Styles for the Internet Service Booking form
+ */
+
+/* Container */
+.isb-booking-form-container {
+    max-width: 100%;
+    margin: 0 auto;
+    padding: 20px;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen-Sans, Ubuntu, Cantarell, "Helvetica Neue", sans-serif;
+    box-sizing: border-box;
+}
+
+/* Form sections */
+.isb-form-section {
+    margin-bottom: 30px;
+    padding: 20px;
+    background-color: #f9f9f9;
+    border-radius: 5px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    box-sizing: border-box;
+    width: 100%;
+}
+
+.isb-form-section h3 {
+    margin-top: 0;
+    margin-bottom: 20px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid #e0e0e0;
+    color: #333;
+    font-size: 1.3em;
+}
+
+/* Form rows */
+.isb-form-row {
+    margin-bottom: 15px;
+    width: 100%;
+}
+
+/* Form fields */
+.isb-form-field {
+    position: relative;
+    width: 100%;
+}
+
+.isb-form-field label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: 500;
+    color: #444;
+}
+
+.isb-form-field .required {
+    color: #e53935;
+}
+
+.isb-form-field input[type="text"],
+.isb-form-field input[type="email"],
+.isb-form-field input[type="tel"],
+.isb-form-field input[type="password"],
+.isb-form-field select,
+.isb-form-field textarea {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    background-color: #fff;
+    font-size: 16px;
+    line-height: 1.5;
+    transition: border-color 0.2s ease;
+    box-sizing: border-box;
+    max-width: 100%;
+}
+
+.isb-form-field input[type="text"]:focus,
+.isb-form-field input[type="email"]:focus,
+.isb-form-field input[type="tel"]:focus,
+.isb-form-field input[type="password"]:focus,
+.isb-form-field select:focus,
+.isb-form-field textarea:focus {
+    border-color: #2196f3;
+    outline: none;
+    box-shadow: 0 0 0 2px rgba(33, 150, 243, 0.2);
+}
+
+.isb-form-field small {
+    display: block;
+    margin-top: 5px;
+    color: #666;
+    font-size: 0.85em;
+}
+
+/* Datepicker customization */
+.isb-datepicker {
+    background-color: #fff;
+    cursor: pointer;
+}
+
+/* Error field highlighting */
+.isb-error-field {
+    border-color: #e53935 !important;
+    background-color: #ffebee !important;
+}
+
+/* Time slots */
+.isb-time-slots {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-top: 10px;
+}
+
+.isb-time-slot {
+    padding: 10px 15px;
+    background-color: #fff;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.isb-time-slot:hover {
+    background-color: #f0f7ff;
+    border-color: #2196f3;
+}
+
+.isb-time-slot.selected {
+    background-color: #2196f3;
+    border-color: #2196f3;
+    color: #fff;
+}
+
+.isb-time-slot.unavailable {
+    background-color: #f5f5f5;
+    border-color: #ddd;
+    color: #999;
+    cursor: not-allowed;
+    text-decoration: line-through;
+}
+
+/* Submit button */
+.isb-form-actions {
+    margin-top: 20px;
+    text-align: center;
+}
+
+.isb-submit-button {
+    padding: 12px 24px;
+    background-color: #2196f3;
+    color: #fff;
+    border: none;
+    border-radius: 4px;
+    font-size: 16px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+    width: 100%;
+    max-width: 300px;
+}
+
+.isb-submit-button:hover {
+    background-color: #1976d2;
+}
+
+.isb-submit-button:disabled {
+    background-color: #b0bec5;
+    cursor: not-allowed;
+}
+
+/* Messages */
+.isb-form-messages {
+    margin-top: 20px;
+}
+
+.isb-message {
+    padding: 15px;
+    border-radius: 4px;
+    margin-bottom: 15px;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.isb-success-message {
+    background-color: #e8f5e9;
+    border-left: 4px solid #4caf50;
+    color: #2e7d32;
+}
+
+.isb-error-message {
+    background-color: #ffebee;
+    border-left: 4px solid #f44336;
+    color: #c62828;
+}
+
+/* Status badges */
+.isb-status-badge {
+    display: inline-block;
+    padding: 3px 8px;
+    border-radius: 3px;
+    font-size: 12px;
+    font-weight: 500;
+    text-transform: uppercase;
+}
+
+.isb-status-pending {
+    background-color: #f0f0f0;
+    color: #777;
+}
+
+.isb-status-confirmed {
+    background-color: #e7f5ea;
+    color: #388e3c;
+}
+
+.isb-status-cancelled {
+    background-color: #ffebee;
+    color: #d32f2f;
+}
+
+.isb-status-completed {
+    background-color: #e3f2fd;
+    color: #1565c0;
+}
+
+.isb-status-failed {
+    background-color: #fce4ec;
+    color: #c2185b;
+}
+
+/* Responsive layout - form grid */
+@media (min-width: 768px) {
+    .isb-form-row {
+        display: flex;
+        flex-wrap: wrap;
+        margin-left: -10px;
+        margin-right: -10px;
+    }
+    
+    .isb-form-field {
+        flex: 0 0 50%;
+        padding: 0 10px;
+        box-sizing: border-box;
+    }
+    
+    /* Full width fields */
+    .isb-form-field.full-width {
+        flex: 0 0 100%;
+    }
+    
+    .isb-booking-form-container {
+        max-width: 800px;
+    }
+}
+
+/* Smaller screens adjustments */
+@media (max-width: 767px) {
+    .isb-form-section {
+        padding: 15px;
+    }
+    
+    .isb-form-field input[type="text"],
+    .isb-form-field input[type="email"],
+    .isb-form-field input[type="tel"],
+    .isb-form-field input[type="password"],
+    .isb-form-field select,
+    .isb-form-field textarea {
+        padding: 8px;
+        font-size: 14px;
+    }
+    
+    .isb-submit-button {
+        width: 100%;
+        padding: 10px;
+    }
+}
+
+/* Very small screens */
+@media (max-width: 480px) {
+    .isb-form-section h3 {
+        font-size: 1.1em;
+    }
+    
+    .isb-form-field label {
+        font-size: 14px;
+    }
+    
+    .isb-form-section {
+        padding: 10px;
+    }
+}
+/* Enhanced calendar styling */
+.ui-datepicker {
+    width: 280px;
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    background-color: #ffffff !important; /* Force white background */
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15); /* Add substantial shadow */
+    z-index: 9999 !important;
+    position: absolute !important;
+    display: none;
+}
+
+/* Calendar header styling */
+.ui-datepicker .ui-datepicker-header {
+    position: relative;
+    padding: 15px 0;
+    background-color: #f7f7f7;
+    border-bottom: 1px solid #e0e0e0;
+    border-radius: 7px 7px 0 0;
+}
+
+/* Month and year display */
+.ui-datepicker .ui-datepicker-title {
+    margin: 0 40px;
+    line-height: 1.8em;
+    text-align: center;
+    font-weight: bold;
+    color: #333;
+}
+
+/* Navigation buttons */
+.ui-datepicker .ui-datepicker-prev,
+.ui-datepicker .ui-datepicker-next {
+    position: absolute;
+    top: 12px;
+    width: 30px;
+    height: 30px;
+    text-align: center;
+    cursor: pointer;
+    border-radius: 4px;
+    background-color: #f0f0f0;
+    border: 1px solid #ddd;
+}
+
+.ui-datepicker .ui-datepicker-prev {
+    left: 8px;
+}
+
+.ui-datepicker .ui-datepicker-next {
+    right: 8px;
+}
+
+.ui-datepicker .ui-datepicker-prev:hover,
+.ui-datepicker .ui-datepicker-next:hover {
+    background-color: #e0e0e0;
+}
+
+/* Button labels */
+.ui-datepicker .ui-datepicker-prev:after {
+    content: "Prev";
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 12px;
+    color: #555;
+}
+
+.ui-datepicker .ui-datepicker-next:after {
+    content: "Next";
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 12px;
+    color: #555;
+}
+
+/* Hide the original text */
+.ui-datepicker .ui-datepicker-prev span,
+.ui-datepicker .ui-datepicker-next span {
+    display: none;
+}
+
+/* Calendar table */
+.ui-datepicker table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 5px 0 0 0;
+    background-color: #fff; /* Ensure table background is white */
+}
+
+/* Day headers */
+.ui-datepicker th {
+    padding: 8px 0;
+    text-align: center;
+    font-weight: 600;
+    color: #666;
+    border: 0;
+    background-color: #f9f9f9;
+}
+
+/* Day cells */
+.ui-datepicker td {
+    border: 0;
+    padding: 2px;
+}
+
+.ui-datepicker td span,
+.ui-datepicker td a {
+    display: block;
+    padding: 8px 0;
+    text-align: center;
+    text-decoration: none;
+    border-radius: 4px;
+}
+
+/* Default date styling */
+.ui-datepicker td a.ui-state-default {
+    background-color: #fff;
+    border: 1px solid #f5f5f5;
+    color: #333;
+}
+
+/* Hover effect */
+.ui-datepicker td a.ui-state-hover {
+    background-color: #f0f7ff;
+    border-color: #2196f3;
+}
+
+/* Selected date */
+.ui-datepicker td a.ui-state-active {
+    background-color: #2196f3;
+    border-color: #2196f3;
+    color: #fff;
+}
+
+/* Disabled/past dates */
+.ui-datepicker td.ui-state-disabled {
+    opacity: 1; /* Make visible but styled differently */
+}
+
+.ui-datepicker td.ui-state-disabled span {
+    background-color: #f5f5f5;
+    color: #bbb;
+    text-decoration: line-through;
+}
+
+/* Specifically target today's date if it's in the past */
+.ui-datepicker td.ui-datepicker-today.ui-state-disabled span {
+    background-color: #f5f5f5;
+    color: #bbb;
+    text-decoration: line-through;
+    border: 1px dashed #ccc;
+}
+
+/* Force opaque background */
+.ui-datepicker, 
+.ui-datepicker table,
+.ui-datepicker tr,
+.ui-datepicker td,
+.ui-datepicker th {
+    background-color: #ffffff;
+}
+
+/* Ensure whole calendar has white background */
+.ui-widget-content {
+    background: #ffffff !important;
+    border: none !important;
+}
+
+/* Fix for any overflow that might cause horizontal scrolling */
+body {
+    overflow-x: hidden;
+}
+
+.isb-form {
+    overflow-x: visible;
+    max-width: 100%;
+}
+
+/* Fix potential issues with WordPress themes */
+.isb-booking-form-container * {
+    box-sizing: border-box;
+}
+
+/* Make container responsive to theme content width */
+.entry-content .isb-booking-form-container,
+.site-content .isb-booking-form-container,
+.content-area .isb-booking-form-container {
+    width: 100%;
+    max-width: 100%;
+}
+/* Time slot message styling */
+#time-slot-message {
+    margin-top: 8px;
+    padding: 8px 12px;
+    border-radius: 4px;
+    font-size: 14px;
+}
+
+/* Description text for fields */
+.isb-form-field small {
+    display: block;
+    margin-top: 5px;
+    color: #666;
+    font-size: 0.85em;
+    line-height: 1.4;
+}
+
+/* Highlight WhatsApp text */
+.isb-form-field small em {
+    font-style: normal;
+    font-weight: 600;
+    color: #25D366; /* WhatsApp green color */
+}
